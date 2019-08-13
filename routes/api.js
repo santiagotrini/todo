@@ -11,8 +11,8 @@ router.get('/todo/:id', todo.one);
 // crear tarea
 router.post('/todo', todo.save);
 // modificar tarea
-// router.put('/todo/:id', todo.update);
+router.put('/todo/:id', todo.update);
 // borrar tarea
-// router.delete('/todo/:id', todo.delete);
+router.delete('/todo/:id', todo.delete);
 
 module.exports = router;

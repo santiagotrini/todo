@@ -27,3 +27,19 @@ exports.save = (req, res, next) => {
     res.json(todo);
   });
 };
+
+// DELETE /api/todo/id
+exports.delete = (req, res, next) => {
+  Todo.findByIdAndRemove(req.params.id).exec((err, json) => {
+    if (err) return next(err);
+    res.sendStatus(200);
+  });
+};
+
+// PUT /api/todo/id
+exports.update = (req, res, next) => {
+  Todo.findByIdAndUpdate(req.params.id, {description: req.body.description, done: false}, (err, json) => {
+    if (err) return next(err);
+    res.sendStatus(200);
+  });
+};
