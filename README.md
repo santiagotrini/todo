@@ -252,9 +252,9 @@ app.use('/api', router)
 Testeamos las rutas, metemos un par de tareas usando cURL
 
 ```
-$ curl -d '{"description":"Pasear al perro"}' -H "Content-Type: application/json" -X POST http://localhost:3000/api/todo
-$ curl -d '{"description":"Lavar la ropa"}' -H "Content-Type: application/json" -X POST http://localhost:3000/api/todo
-$ curl -d '{"description":"Hacer la tarea"}' -H "Content-Type: application/json" -X POST http://localhost:3000/api/todo
+$ curl -d '{"description":"Pasear al perro"}' -H "Content-Type: application/json" -X POST http://localhost:5000/api/todo
+$ curl -d '{"description":"Lavar la ropa"}' -H "Content-Type: application/json" -X POST http://localhost:5000/api/todo
+$ curl -d '{"description":"Hacer la tarea"}' -H "Content-Type: application/json" -X POST http://localhost:5000/api/todo
 ```
 
 En el navegador podemos ver las tareas que cargamos a la DB usando la API
