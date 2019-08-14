@@ -1,25 +1,37 @@
+function addTask(task) {
+  let label = document.createElement('label');
+  let check = document.createElement('input');
+  check.type = 'checkbox';
+  check.id = task._id;
+  label.htmlFor = task._id;
+  label.innerHTML = task.description;
+  document.getElementById('form').appendChild(check);
+  document.getElementById('form').appendChild(label)
+  let br = document.createElement('br');
+  document.getElementById('form').appendChild(br);
+}
+
 function getTasks() {
   fetch('http://localhost:5000/api/todos')
   .then(res => res.json())
   .then((json) => {
     // console.log(json);
     for (let item of json) {
-      let li = document.createElement('li');
-      document.getElementById('list').appendChild(li)
-      let check = document.createElement('input');
-      check.type = 'checkbox';
-      li.innerHTML = item.description;
-      li.appendChild(check);
+      addTask(item);
     }
+    getCheckboxes();
   });
+}
+
+function getCheckboxes() {
+  let checkboxes = document.querySelectorAll('input[type=checkbox]');
+  // console.log(checkboxes);
 }
 
 getTasks();
 
 
 let btn = document.getElementById('btn');
-
-
 
 btn.onclick = function() {
   const data = {};
@@ -35,12 +47,8 @@ btn.onclick = function() {
   fetch(url, options)
   .then(res => res.json())
   .then(json => {
-    let li = document.createElement('li');
-    document.getElementById('list').appendChild(li)
-    let check = document.createElement('input');
-    check.type = 'checkbox';
-    li.innerHTML = json.description;
-    li.appendChild(check);
+    addTask(json);
     document.getElementById('input').value = '';
   });
+  getCheckboxes();
 };

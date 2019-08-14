@@ -1,0 +1,17 @@
+h1 {
+  font-family: 'Lato', serif;
+  margin-left: 30px;
+}
+
+form {
+  margin: 30px 30px 30px 30px;
+}
+
+input[type=checkbox] + label {
+  font-family: 'Montserrat', sans-serif;
+  margin-left: 15px;
+}
+
+input[type=checkbox]:checked + label {
+  text-decoration: line-through;
+}
