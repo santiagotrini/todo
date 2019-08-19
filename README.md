@@ -229,7 +229,7 @@ $ cd routes
 $ touch api.js
 ```
 
-En `routes/api.js` usamos el objeto Router de Express para especificar todas las rutas de nuestra API (las URLs que sirven para hacer algo segun que metodo HTTP usemos). Basicamente es el CRUD del que les hable al principio. Las funciones que se ejecutan al acceder a estas rutas van a estar en el/los controladores.
+En `routes/api.js` usamos el objeto Router de Express para especificar todas las rutas de nuestra API (las URLs que sirven para hacer algo segun que metodo HTTP usemos). Basicamente es el CRUD del que les hable al principio. Las funciones que se ejecutan al acceder a estas rutas van a estar en el/los controladores. Los metodos HTTP (o verbos) que se suelen usar en una API REST son POST, GET, PUT, DELETE (para crear, leer, actualizar y borrar en ese orden). Para GET tenemos dos rutas, una para traer todas las tareas `/todos` y otra para una sola tarea `/todo/:id`. Si ponemos dos puntos adelante de id podemos tener el valor del id luego en el objeto `req.params`.
 
 ```js
 const express = require("express");
@@ -250,9 +250,12 @@ router.put('/todo/:id', todo.update);
 router.delete('/todo/:id', todo.delete);
 
 module.exports = router;
+
 ```
 
-En `controllers/todo.js`
+Con eso terminamos nuestro archivo `routes/api.js`
+
+Ahora los controladores. Aca usamos las funciones que nos da Mongoose para realizar las queries a nuestra base de datos. Primero importamos nuestro modelo (que todavia no hicimos) y exportamos cada una de las funciones que llamamos en nuestras rutas. Todas las funciones llevan tres parametros: `(req, res, next)`. Esta es la manera tipica de laburar en Express. En `controllers/todo.js`
 
 ```js
 const Todo = require('../models/Todo');
@@ -284,12 +287,31 @@ exports.save = (req, res, next) => {
     res.json(todo);
   });
 };
+
+// DELETE /api/todo/id
+exports.delete = (req, res, next) => {
+  Todo.findByIdAndRemove(req.params.id).exec((err, json) => {
+    if (err) return next(err);
+    res.sendStatus(200);
+  });
+};
+
+// PUT /api/todo/id
+exports.update = (req, res, next) => {
+  Todo.findByIdAndUpdate(req.params.id, {done: req.body.done}, (err, json) => {
+    if (err) return next(err);
+    res.sendStatus(200);
+  });
+};
 ```
 
-Creamos el modelo para una tarea, en `models/Todo.js`
+Notemos algunas cosas. Usamos `req.params.id` en las funciones para tomar el id de una tarea que aparece en la URL. Todas las funciones terminan llamando a una funcion del objeto _response_ (respuesta). Las funciones de GET y POST devuelven una o varias tareas, siempre en formato JSON, que es la idea de una API REST, realizamos operaciones por medio de peticiones HTTP a distintas URLs y devolvemos si es necesario objetos de JavaScript en formato JSON. Como las funciones de actualizar y borrar no devuelven la tarea hay que terminar el ciclo peticion / respuesta con un `res.sendStatus(200)`. El codigo 200 es el codigo que indica que todo salio bien en HTTP. Las funciones de PUT y POST usan el cuerpo de la peticion (_body_) para llevar JSON, ahi van los datos a cargar o modificar en la base de datos. En cada funcion usamos un objeto _Todo_. Ese es nuestro modelo, que va definido en la carpeta `models`. Hacemos eso a continuacion.
+
+Creamos el modelo para una tarea, en `models/Todo.js`. Se definen los datos que guarda una tarea: descripcion y si esta hecha o no. El id es automatico y funciona similar a una clave primaria en SQL, siempre esta en un atributo llamado `_id`. Al final exportamos el modelo para poder usarlo en nuestro controlador.
 
 ```js
 const mongoose = require("mongoose");
+
 const TodoSchema = new mongoose.Schema({
   description: {
     type: String,
@@ -304,7 +326,9 @@ const TodoSchema = new mongoose.Schema({
 module.exports = mongoose.model("Todo", TodoSchema);
 ```
 
-Agregamos las rutas a la app en `index.js`
+## Juntando todo
+
+Nuestra API esta terminada, la usamos en nuestra app agregandola a `index.js`. Con `app.use` le decimos que las rutas definidas en `api.js` van precedidas por un `/api`. Asi que las URLs absolutas de nuestra API van a ser http://localhost:5000/api/todos por ejemplo para mostrar todas las tareas.
 
 ```js
 const router = require('./routes/api');
@@ -312,7 +336,7 @@ const router = require('./routes/api');
 app.use('/api', router)
 ```
 
-Testeamos las rutas, metemos un par de tareas usando cURL
+Testeamos las rutas, metemos un par de tareas usando cURL, una herramienta de linea de comandos para hacer peticiones HTTP.
 
 ```
 $ curl -d '{"description":"Pasear al perro"}' -H "Content-Type: application/json" -X POST http://localhost:5000/api/todo
@@ -323,3 +347,15 @@ $ curl -d '{"description":"Hacer la tarea"}' -H "Content-Type: application/json"
 En el navegador podemos ver las tareas que cargamos a la DB usando la API
 
 http://localhost:5000/api/todos
+
+Con esto terminamos el _backend_ por ahora. Podemos convencernos de que todas las rutas hacen lo que deberian testeandolas con el Postman (`yay -S postman`).
+
+## Ahora el frontend
+
+Lo unico que falta es terminar nuestra interfaz de usuario, por ahora estatica. Tenemos que darle funcionalidad a los botones, y eso lo hacemos con JavaScript y utilizando las rutas de nuestra API para operar sobre la base de datos.
+
+Como la idea es no utilizar librerias voy a hacer uso del metodo `fetch()` para traer los datos de la DB.
+
+Con los datos que me vienen en JSON simplemente los convertimos a objetos de JavaScript y manipulamos el DOM (Document Object Model) para ir armando nuestra lista de tareas.
+
+Usamos el archivo `gui.js` para la logica de la interfaz de usuario, que es basicamente que se ejecuta cuando hago click en los distintos elementos.
