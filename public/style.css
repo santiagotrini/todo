@@ -15,3 +15,12 @@ input[type=checkbox] + label {
 input[type=checkbox]:checked + label {
   text-decoration: line-through;
 }
+
+
+label > i {
+  margin-left: 10px;
+  font-style: normal;
+  font-size: 20px;
+  text-decoration: none;
+  display: inline-block;
+}

@@ -38,7 +38,7 @@ exports.delete = (req, res, next) => {
 
 // PUT /api/todo/id
 exports.update = (req, res, next) => {
-  Todo.findByIdAndUpdate(req.params.id, {description: req.body.description, done: false}, (err, json) => {
+  Todo.findByIdAndUpdate(req.params.id, {done: req.body.done}, (err, json) => {
     if (err) return next(err);
     res.sendStatus(200);
   });
