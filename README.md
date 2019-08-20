@@ -359,3 +359,161 @@ Como la idea es no utilizar librerias voy a hacer uso del metodo `fetch()` para 
 Con los datos que me vienen en JSON simplemente los convertimos a objetos de JavaScript y manipulamos el DOM (Document Object Model) para ir armando nuestra lista de tareas.
 
 Usamos el archivo `gui.js` para la logica de la interfaz de usuario, que es basicamente que se ejecuta cuando hago click en los distintos elementos.
+
+No es la unica forma de resolver el problema, nomas la primera que se me ocurrio.
+
+Bueno en `gui.js` ponemos el siguiente codigo
+
+```js
+let checkboxes = [];
+let deleteIcons = [];
+let btn = document.getElementById('btn');
+btn.onclick = saveTask;
+fetchTasks();
+```
+
+La logica es la siguiente. Tenemos tres variables globales. Un array para guardar todas las _checkboxes_, otro para todos los iconos para borrar tareas y una variable para el boton de agregar tarea. Luego llamamos a la funcion `fetchTasks()` que hace una consulta a `http://localhost:5000/api/todos` y arma la lista con las tareas que estan en la DB.
+
+Para eso necesitamos varias funciones ademas de `fetchTasks()`.
+
+- `addTask(task)`
+- `saveTask()`
+- `updateTask(element)`
+- `deleteTask(element)`
+- `getCheckboxes()`
+- `getIcons()`
+
+Las dos ultimas son las que cargan los arrays globales de checkboxes e iconos y le asignan la funcion correspondiente al atributo `onclick`.
+
+La primer funcion `addTask(task)` solo agrega tareas a la lista en la interfaz.
+
+Las tres restantes realizan las peticiones HTTP del tipo POST, PUT y DELETE.
+
+Las funciones son las siguientes:
+
+```js
+function fetchTasks() {
+  fetch('http://localhost:5000/api/todos')
+  .then(res => res.json())
+  .then(json => {
+    // console.log(json);
+    for (let item of json) {
+      addTask(item);
+    }
+    getCheckboxes();
+    getIcons();
+  });
+}
+
+function addTask(task) {
+  let label = document.createElement('label');
+  let check = document.createElement('input');
+  check.type = 'checkbox';
+  check.id = task._id;
+  label.htmlFor = task._id;
+  label.innerHTML = task.description;
+  document.getElementById('form').appendChild(check);
+  document.getElementById('form').appendChild(label)
+  let br = document.createElement('br');
+  if (task.done) {
+    check.checked = true;
+    let icon = document.createElement('i');
+    icon.classList.add('fas', 'fa-trash');
+    icon.id = task._id;
+    label.append(icon);
+  }
+  document.getElementById('form').appendChild(br);
+  getCheckboxes();
+}
+
+function saveTask() {
+  const data = {};
+  data.description = document.getElementById('input').value;
+  const url = 'http://localhost:5000/api/todo'
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  };
+  fetch(url, options)
+  .then(res => res.json())
+  .then(json => {
+    addTask(json);
+    document.getElementById('input').value = '';
+  });
+}
+
+function getCheckboxes() {
+  checkboxes = document.querySelectorAll('input[type=checkbox]');
+  for (let cb of checkboxes) {
+    cb.onclick = updateTask;
+  }
+}
+
+function getIcons() {
+  deleteIcons = document.querySelectorAll('i');
+  for (let i of deleteIcons) {
+    i.onclick = deleteTask;
+  }
+}
+
+function updateTask(element) {
+  const data = {};
+  if (element.target.checked)
+    data.done = true;
+  else
+    data.done = false;
+  const url = 'http://localhost:5000/api/todo/' + element.target.id;
+  const options = {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  };
+  fetch(url, options);
+  let labels = document.getElementsByTagName('label');
+  for (let label of labels) {
+    if (label.htmlFor == element.target.id) {
+      if (element.target.checked) {
+        let icon = document.createElement('i');
+        icon.classList.add('fas', 'fa-trash');
+        icon.id = element.target.id;
+        label.append(icon);
+      }
+      else {
+        label.removeChild(label.lastElementChild);
+      }
+    }
+  }
+  getIcons();
+}
+
+function deleteTask(element) {
+  const url = 'http://localhost:5000/api/todo/' + element.target.id;
+  const options = {
+    method: 'DELETE'
+  };
+  fetch(url, options)
+  .then(() => {
+    for (let cb of checkboxes) {
+      if (cb.id == element.target.id) {
+        cb.remove();
+      }
+    }
+    let labels = document.getElementsByTagName('label');
+    for (let label of labels) {
+      if (label.htmlFor == element.target.id) {
+        label.remove();
+      }
+    }
+    getCheckboxes();
+    getIcons();
+  });
+}
+```
+
+La funcion `fetch()` usa algo llamado promesas (_promises_) y se utiliza de la siguiente manera.
+Cuando llamamos a `fetch` y le damos una URL como argumento la funcion nos devuelve una "promesa". Cuando esa promesa se resuelve (nos llegan los datos de la DB) se ejecuta una funcion _callback_ que es el argumento del `.then()`. Si esa _callback_ devuelve otra promesa entonces se puede encadenar otra funcion con `.then()`. Esto sirve para ejecutar el codigo que usa el resultado de la query a la base de datos recien cuando  tenemos la respuesta de esa query disponible.
