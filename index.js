@@ -7,6 +7,9 @@ const port = process.env.PORT || 5000;
 // const mongoURI = 'mongodb://santiago:todo1234@ds261817.mlab.com:61817/todo_api';
 const mongoURI = 'mongodb://localhost/todo_api'
 
+// para sacar el DeprecationWarning
+mongoose.set('useFindAndModify', false);
+
 mongoose
   .connect(mongoURI, { useNewUrlParser: true })
   .then(() => {
